@@ -51,4 +51,4 @@ What we changed.
 * Fixed it so you can kill it with ctrl+c
 * Added a default queue.
 * Added the ability to pass a config file
-* added the ability to configure thre default queue
+* added the ability to configure the default queue

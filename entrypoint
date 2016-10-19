@@ -1,0 +1,46 @@
+#!/bin/sh
+
+CONTAINER_ID=$(hostname)
+BRIDGE=$(cat /etc/hosts|grep $CONTAINER_ID|cut -s -f1)
+if [[ ! -z $BRIDGE_HOST ]]; then BRIDGE=$BRIDGE_HOST; fi
+
+if [[ ! -z $1 ]];
+then
+    echo -e "$@" > /elasticmq/elasticmq.conf
+else
+    CONFIG=$(cat <<EOF
+    // https://github.com/adamw/elasticmq#installation-stand-alone
+    include classpath("application.conf")
+
+    node-address {
+        protocol = http
+        host = $BRIDGE
+        port = 9324
+        context-path = ""
+    }
+
+    rest-sqs {
+        enabled = true
+        bind-port = 9324
+        bind-hostname = "0.0.0.0"
+        // Possible values: relaxed, strict
+        sqs-limits = relaxed
+    }
+
+    queues {
+        $QUEUE_NAME {
+            defaultVisibilityTimeout = $QUEUE_DEFAULT_VISIBILITY_TIMEOUT seconds
+            delay = $QUEUE_DELAY seconds
+            receiveMessageWait = $QUEUE_RECEIVE_MESSAGE_WAIT seconds
+        }
+    }
+EOF
+)
+    echo -e "$CONFIG" > /elasticmq/elasticmq.conf
+fi
+
+echo "Wrote config to /elasticmq/elasticmq.conf:"
+cat  /elasticmq/elasticmq.conf
+echo "============================================"
+
+exec java -jar -Dconfig.file=/elasticmq/elasticmq.conf /elasticmq/elasticmq-server.jar

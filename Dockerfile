@@ -1,13 +1,21 @@
-FROM       ubuntu:14.04
-MAINTAINER Behance RE
+FROM java:8-alpine
 
-RUN sudo apt-get update && apt-get install default-jre -y
+ADD https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.10.0.jar /elasticmq/
 
-ADD  https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.8.8.jar /elasticmq/elasticmq-0.0.8.jar
-ADD  run /elasticmq/run
-RUN  chmod +x /elasticmq/run
+WORKDIR /elasticmq
+
+RUN ln -s elasticmq-server-0.10.0.jar elasticmq-server.jar
 
 EXPOSE 9324
 
-ENTRYPOINT ["/elasticmq/run"]
-CMD        []
+ENV BRIDGE_HOST='' \
+    QUEUE_NAME="default" \
+    QUEUE_DEFAULT_VISIBILITY_TIMEOUT=10 \
+    QUEUE_DELAY=5 \
+    QUEUE_RECEIVE_MESSAGE_WAIT=0
+
+COPY /entrypoint /elasticmq/entrypoint
+RUN chmod +x /elasticmq/entrypoint
+
+ENTRYPOINT ["/elasticmq/entrypoint"]
+CMD []
